@@ -1,9 +1,13 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/jsx-pascal-case */
 import { UserAddOutlined } from '@ant-design/icons';
 import { Button, Tooltip, Avatar, Input, Form, Alert } from 'antd';
-import React, { useContext } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { addDocument } from '../../firebase/services';
+import useFireStore from '../../hooks/useFireStore';
 import { AppContext } from '../Context/AppProvider';
+import { AuthContext } from '../Context/AuthProvider';
 import Message from './Message';
 
 const HeaderStyled = styled.div`
@@ -64,10 +68,40 @@ const FormStyled = styled(Form)`
 const MessageListStyled = styled.div`
     max-height: 100%;
     overflow-y: auto; 
+    padding-bottom: 15px;
 `;
 
 function ChatWindow() {
   const { selectedRoom, members, setOpenModalInvite } = useContext(AppContext);
+  const { user: {
+    uid, photoURL, displayName
+  }} = useContext(AuthContext);
+
+  const [inputValue, setInputValue] = useState('');
+  const [form] = Form.useForm();
+ 
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+  }
+
+  const handleOnSubmit = () => {
+    addDocument('messages', {
+        text: inputValue,
+        uid,
+        photoURL,
+        roomId: selectedRoom.id,
+        displayName
+    });
+    form.resetFields(['message']);
+  }
+
+  const condition = useMemo(() => ({
+    fieldName: 'roomId',
+    operator: '==',
+    compareValue: selectedRoom.id
+  }), [selectedRoom.id]);
+
+  const messages = useFireStore('messages', condition);
 
   return (
     <WrapperStyled>
@@ -96,16 +130,31 @@ function ChatWindow() {
                     </HeaderStyled>
                     <ContentStyled>
                         <MessageListStyled>
-                            <Message text={'Test'} displayName={'Tung'} createdAt={12321332132213} photoURL={null}/>
+                            { messages.map(mes => <Message 
+                                    text={mes.text} 
+                                    displayName={mes.displayName} 
+                                    createdAt={mes.createAt} 
+                                    photoURL={mes.photoURL} 
+                                    key={mes.id}
+                                    userId={mes.uid}
+                                />
+                            ) }
+                            {/* <Message text={'Test'} displayName={'Tung'} createdAt={12321332132213} photoURL={null}/>
                             <Message text={'Test123'} displayName={'Tung'} createdAt={12321332132213} photoURL={null}/>
                             <Message text={'Test2321321'} displayName={'Tung'} createdAt={12321332132213} photoURL={null}/>
-                            <Message text={'Testt123'} displayName={'Tung'} createdAt={12321332132213} photoURL={null}/>
+                            <Message text={'Testt123'} displayName={'Tung'} createdAt={12321332132213} photoURL={null}/> */}
                         </MessageListStyled>
-                        <FormStyled>
-                            <Form.Item>
-                                <Input placeholder='Nhập tin nhắn...' bordered={false} autoComplete='off' />
+                        <FormStyled form={form}>
+                            <Form.Item name="message">
+                                <Input 
+                                    placeholder='Nhập tin nhắn...' 
+                                    bordered={false} 
+                                    autoComplete='off' 
+                                    onChange={handleInputChange}
+                                    onPressEnter={handleOnSubmit}
+                                />
                             </Form.Item>
-                            <Button type='primary'>Gửi</Button>
+                            <Button type='primary' onClick={handleOnSubmit}>Gửi</Button>
                         </FormStyled>
                     </ContentStyled>
                 </>
