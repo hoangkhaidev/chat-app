@@ -1,6 +1,9 @@
+/* eslint-disable no-unused-vars */
 import { Button, Collapse, Typography } from "antd";
 import styled from "styled-components";
 import { PlusSquareOutlined } from '@ant-design/icons';
+import { useContext} from "react";
+import { AppContext } from "../Context/AppProvider";
 
 const { Panel } = Collapse;
 
@@ -27,13 +30,20 @@ const LinkStyled = styled(Typography.Link)`
 `;
 
 function RoomList() {
+  const {rooms, setOpenModal, setSelectedRoomId} = useContext(AppContext);  
+
+  const onAddRoom = () => {
+    setOpenModal(true);
+  }
+
   return (
     <Collapse ghost defaultActiveKey={['1']}>
       <PanelStyled header="Danh sách các phòng" key='1'>
-        <LinkStyled>Room 1</LinkStyled>
+        {rooms.map((item) => <LinkStyled key={item.id} onClick={() => setSelectedRoomId(item.id)}>{item.name}</LinkStyled> )}
+        {/* <LinkStyled>Room 1</LinkStyled>
         <LinkStyled>Room 2</LinkStyled>
-        <LinkStyled>Room 3</LinkStyled>
-        <Button type='text' icon={<PlusSquareOutlined />} className="add-room">Thêm phòng</Button>
+        <LinkStyled>Room 3</LinkStyled> */}
+        <Button type='text' icon={<PlusSquareOutlined />} className="add-room" onClick={() => onAddRoom()}>Thêm phòng</Button>
       </PanelStyled>
     </Collapse>
   );

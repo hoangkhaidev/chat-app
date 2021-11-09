@@ -21,8 +21,9 @@ function AuthProvider({ children }) {
             });
             setIsLoading(false);
             navigate('/');
+            return;
         }
-
+        setIsLoading(false);
         navigate('/login');
     });
 
